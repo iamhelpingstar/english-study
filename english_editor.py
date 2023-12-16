@@ -3,7 +3,8 @@ import re
 from collections import deque
 
 READ = "@@@"
-EDIT = "==="
+EDIT_START = "---"
+EDIT_END = "==="
 
 REPEAT = 10
 
@@ -25,7 +26,7 @@ def r_nubmer(n: int) -> str:
 
 def write_edit(n: int, q: Deque[str]):
     path = f"sentence/edit.md"
-    with open(path, "a") as file:
+    with open(path, "a", encoding="UTF-8") as file:
         file.write(r_nubmer(n))
         file.write("\n\n")
         while q:
@@ -35,7 +36,7 @@ def write_edit(n: int, q: Deque[str]):
 
 def write_non_read(n: int, q: Deque[str]):
     path = f"sentence/r{n}.md"
-    with open(path, "w") as file:
+    with open(path, "w", encoding="UTF-8") as file:
         while q:
             file.write(q.popleft())
             file.write("\n\n")
@@ -43,7 +44,7 @@ def write_non_read(n: int, q: Deque[str]):
 
 def write_read(n: int, q: Deque[str]):
     path = f"sentence/r{n+1}.md"
-    with open(path, "a") as file:
+    with open(path, "a", encoding="UTF-8") as file:
         while q:
             file.write(q.popleft())
             file.write("\n\n")
@@ -52,7 +53,7 @@ def write_read(n: int, q: Deque[str]):
 def edit_to_r():
     r_number = None
     r_list = [[] for _ in range(REPEAT)]
-    with open("sentence/edit.md", "r") as e_file:
+    with open("sentence/edit.md", "r", encoding="UTF-8") as e_file:
         for e_line in e_file:
             e_line = e_line.rstrip()
             if e_line == "":
@@ -66,17 +67,17 @@ def edit_to_r():
     for i in range(REPEAT):
         if not r_list[i]:
             continue
-        with open(f"sentence/r{i}.md", "a") as r_file:
+        with open(f"sentence/r{i}.md", "a", encoding="UTF-8") as r_file:
             for line in r_list[i]:
                 r_file.write(line)
                 r_file.write("\n\n")
-    open(f"sentence/edit.md", "w").close()
+    open(f"sentence/edit.md", "w", encoding="UTF-8").close()
 
 
 def get_all_sentences(n: int) -> Deque[str]:
     path = f"sentence/r{n}.md"
     sentences = deque()
-    with open(path) as file:
+    with open(path, encoding="UTF-8") as file:
         for line in file:
             line = line.rstrip()
             if line == "":
@@ -94,14 +95,15 @@ def move_sentences(n: int):
 
     while s_arr:
         sen = s_arr.pop()
-        if sen in {READ, EDIT}:
+        if sen in {READ, EDIT_END}:
             assert contains_korean(s_arr[-1]), f"{n}, {s_arr[-1]}"
             if sen == READ:
                 not_read_zone = False
                 continue
-            if sen == EDIT:
-                edit_arr.appendleft(s_arr.pop())
-                edit_arr.appendleft(s_arr.pop())
+            if sen == EDIT_END:
+                while s_arr[-1] != EDIT_START:
+                    edit_arr.appendleft(s_arr.pop())
+                s_arr.pop()
                 continue
         if not_read_zone:
             not_read_arr.appendleft(sen)
